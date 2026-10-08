@@ -1,1 +1,468 @@
-index.html
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4 Kids Voice Car Race</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#eef2f7;
+  color:#222;
+  text-align:center;
+}
+
+.header{
+  background:#0f766e;
+  color:white;
+  padding:18px 10px;
+}
+
+.header h1{
+  margin:0 0 6px;
+  font-size:25px;
+}
+
+.header p{
+  margin:0;
+  font-size:14px;
+}
+
+.game{
+  max-width:700px;
+  margin:15px auto;
+  padding:10px;
+}
+
+.info{
+  background:white;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 2px 8px #0001;
+}
+
+#status{
+  font-weight:bold;
+  margin-top:8px;
+}
+
+.track{
+  position:relative;
+  height:330px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #555 0px,
+      #555 40px,
+      #5e5e5e 40px,
+      #5e5e5e 80px
+    );
+  border:5px solid white;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 3px 12px #0003;
+}
+
+.finish{
+  position:absolute;
+  right:10px;
+  top:0;
+  width:12px;
+  height:100%;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      white 0px,
+      white 15px,
+      black 15px,
+      black 30px
+    );
+}
+
+.car{
+  position:absolute;
+  left:10px;
+  width:58px;
+  height:45px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  transition:left .25s;
+}
+
+.car1{top:20px;background:#ef4444}
+.car2{top:95px;background:#3b82f6}
+.car3{top:170px;background:#22c55e}
+.car4{top:245px;background:#facc15}
+
+.controls{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-top:14px;
+}
+
+button{
+  min-height:50px;
+  border:0;
+  border-radius:12px;
+  background:white;
+  font-size:16px;
+  font-weight:bold;
+  box-shadow:0 2px 7px #0002;
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(.97);
+}
+
+.voice{
+  background:#0f766e;
+  color:white;
+}
+
+.reset{
+  background:#dc2626;
+  color:white;
+  margin-top:12px;
+  width:100%;
+}
+
+.players{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+
+.player{
+  padding:9px;
+  border-radius:10px;
+  background:#f8fafc;
+  font-weight:bold;
+}
+
+@media(max-width:400px){
+  .header h1{font-size:21px}
+  .track{height:300px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>🏁 4 Kids Voice Car Race</h1>
+  <p>बोलो और अपनी car चलाओ!</p>
+</div>
+
+<div class="game">
+
+  <div class="info">
+    <button class="voice" id="voiceButton">
+      🎤 Voice Start
+    </button>
+
+    <div id="status">
+      Voice Start दबाएँ और फिर बोलें: आगे, पीछे, बाएँ, दाएँ या रुको
+    </div>
+  </div>
+
+  <div class="track">
+
+    <div class="finish"></div>
+
+    <div id="car1" class="car car1">🚗</div>
+    <div id="car2" class="car car2">🏎️</div>
+    <div id="car3" class="car car3">🚙</div>
+    <div id="car4" class="car car4">🚕</div>
+
+  </div>
+
+  <div class="players">
+    <div class="player">🔴 Player 1</div>
+    <div class="player">🔵 Player 2</div>
+    <div class="player">🟢 Player 3</div>
+    <div class="player">🟡 Player 4</div>
+  </div>
+
+  <div class="controls">
+
+    <button onclick="movePlayer(1,'forward')">
+      🔴 P1 आगे
+    </button>
+
+    <button onclick="movePlayer(2,'forward')">
+      🔵 P2 आगे
+    </button>
+
+    <button onclick="movePlayer(3,'forward')">
+      🟢 P3 आगे
+    </button>
+
+    <button onclick="movePlayer(4,'forward')">
+      🟡 P4 आगे
+    </button>
+
+    <button onclick="moveAll('back')">
+      ⬅️ पीछे
+    </button>
+
+    <button onclick="moveAll('forward')">
+      ➡️ आगे
+    </button>
+
+  </div>
+
+  <button class="reset" onclick="resetGame()">
+    🔄 New Race
+  </button>
+
+</div>
+
+<script>
+
+let positions = [10,10,10,10];
+
+let recognition = null;
+
+let currentPlayer = 1;
+
+const carSpeed = 35;
+
+function movePlayer(player,direction){
+
+  let index = player - 1;
+
+  if(direction === "forward"){
+    positions[index] += carSpeed;
+  }
+
+  if(direction === "back"){
+    positions[index] -= carSpeed;
+  }
+
+  positions[index] = Math.max(
+    10,
+    Math.min(
+      positions[index],
+      document.querySelector(".track").clientWidth - 75
+    )
+  );
+
+  document.getElementById("car"+player).style.left =
+    positions[index] + "px";
+
+  checkWinner(player);
+}
+
+function moveAll(direction){
+
+  for(let i=1;i<=4;i++){
+    movePlayer(i,direction);
+  }
+
+}
+
+function checkWinner(player){
+
+  let trackWidth =
+    document.querySelector(".track").clientWidth;
+
+  if(positions[player-1] >= trackWidth - 90){
+
+    document.getElementById("status").innerText =
+      "🏆 Player " + player + " जीत गया!";
+
+    if(recognition){
+      recognition.stop();
+    }
+
+  }
+
+}
+
+function resetGame(){
+
+  positions = [10,10,10,10];
+
+  for(let i=1;i<=4;i++){
+    document.getElementById("car"+i).style.left = "10px";
+  }
+
+  document.getElementById("status").innerText =
+    "नई race शुरू! Voice Start दबाएँ।";
+
+}
+
+function processCommand(command){
+
+  command = command.toLowerCase();
+
+  /*
+    Prototype में player बदलने के लिए:
+    "player 1", "player 2", आदि बोल सकते हैं।
+  */
+
+  if(
+    command.includes("player 1") ||
+    command.includes("प्लेयर 1")
+  ){
+    currentPlayer = 1;
+    return;
+  }
+
+  if(
+    command.includes("player 2") ||
+    command.includes("प्लेयर 2")
+  ){
+    currentPlayer = 2;
+    return;
+  }
+
+  if(
+    command.includes("player 3") ||
+    command.includes("प्लेयर 3")
+  ){
+    currentPlayer = 3;
+    return;
+  }
+
+  if(
+    command.includes("player 4") ||
+    command.includes("प्लेयर 4")
+  ){
+    currentPlayer = 4;
+    return;
+  }
+
+  if(
+    command.includes("आगे") ||
+    command.includes("aage") ||
+    command.includes("forward")
+  ){
+
+    movePlayer(currentPlayer,"forward");
+
+    document.getElementById("status").innerText =
+      "Player " + currentPlayer + " → आगे";
+
+    return;
+  }
+
+  if(
+    command.includes("पीछे") ||
+    command.includes("piche") ||
+    command.includes("back")
+  ){
+
+    movePlayer(currentPlayer,"back");
+
+    document.getElementById("status").innerText =
+      "Player " + currentPlayer + " → पीछे";
+
+    return;
+  }
+
+  if(
+    command.includes("रुको") ||
+    command.includes("ruko") ||
+    command.includes("stop")
+  ){
+
+    document.getElementById("status").innerText =
+      "⏸️ Player " + currentPlayer + " रुका";
+
+    return;
+  }
+
+  document.getElementById("status").innerText =
+    "सुना: " + command;
+
+}
+
+function startVoice(){
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+
+    alert(
+      "आपके browser में Voice Recognition उपलब्ध नहीं है। Chrome में खोलकर देखें।"
+    );
+
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+
+  recognition.lang = "hi-IN";
+
+  recognition.continuous = true;
+
+  recognition.interimResults = false;
+
+  recognition.onstart = function(){
+
+    document.getElementById("status").innerText =
+      "🎤 सुन रहा हूँ... Player " +
+      currentPlayer +
+      " की command बोलें।";
+
+  };
+
+  recognition.onresult = function(event){
+
+    let last =
+      event.results[event.results.length-1];
+
+    let command =
+      last[0].transcript;
+
+    processCommand(command);
+
+  };
+
+  recognition.onerror = function(event){
+
+    document.getElementById("status").innerText =
+      "Voice error: " + event.error;
+
+  };
+
+  recognition.onend = function(){
+
+    /*
+      Voice recognition बंद होने पर फिर शुरू करने की कोशिश
+    */
+
+    if(recognition){
+      try{
+        recognition.start();
+      }catch(e){}
+    }
+
+  };
+
+  recognition.start();
+
+}
+
+document
+.getElementById("voiceButton")
+.addEventListener("click",startVoice);
+
+</script>
+
+</body>
+</html>
